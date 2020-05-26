@@ -5,12 +5,12 @@ import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
-import net.runelite.api.GameState;
-import net.runelite.api.events.GameStateChanged;
+import net.runelite.api.events.CommandExecuted;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
+
 
 @Slf4j
 @PluginDescriptor(
@@ -27,21 +27,21 @@ public class WikiBankTagIntegrationPlugin extends Plugin
 	@Override
 	protected void startUp() throws Exception
 	{
-		log.info("Wiki Bank Tag Integration started!");
 	}
 
 	@Override
 	protected void shutDown() throws Exception
 	{
-		log.info("Wiki Bank Tag Integration stopped!");
 	}
 
 	@Subscribe
-	public void onGameStateChanged(GameStateChanged gameStateChanged)
+	public void onCommandExecuted(CommandExecuted commandExecuted)
 	{
-		if (gameStateChanged.getGameState() == GameState.LOGGED_IN)
+		String[] args = commandExecuted.getArguments();
+
+		if(commandExecuted.getCommand().equals("bt") && args.length == 1)
 		{
-			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Wiki Bank Tag Integration says " + config.greeting(), null);
+			addTagsFromCategory(args[0]);
 		}
 	}
 
@@ -50,4 +50,10 @@ public class WikiBankTagIntegrationPlugin extends Plugin
 	{
 		return configManager.getConfig(WikiBankTagIntegrationConfig.class);
 	}
+
+	private void addTagsFromCategory(String category)
+	{
+		log.info("attempting to add tags to items from " + category);
+	}
 }
+
