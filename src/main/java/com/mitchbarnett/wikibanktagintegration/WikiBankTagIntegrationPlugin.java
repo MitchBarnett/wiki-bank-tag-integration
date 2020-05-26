@@ -1,5 +1,6 @@
 package com.mitchbarnett.wikibanktagintegration;
 
+import com.google.gson.Gson;
 import com.google.inject.Provides;
 import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
@@ -15,8 +16,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 
 @Slf4j
@@ -105,14 +105,25 @@ public class WikiBankTagIntegrationPlugin extends Plugin
 
 	String createQueryURL(String category)
 	{
-		return "https://oldschool.runescape.wiki/api.php?action=ask&query=[[Category:]]" + category + "|?All+Item+ID&fpr,at=json";
+		return "https://oldschool.runescape.wiki/api.php?action=ask&query=[[Category:" + category + "]]" + "|?All+Item+ID&format=json";
 	}
 
-	List<Integer> getIDsFromJSON(String Json)
+	List<Integer> getIDsFromJSON(String jsonIn)
 	{
-		return Collections.emptyList();
+		Gson gson = new Gson();
+		log.info(jsonIn);
+		AskResponse askResponse = gson.fromJson(jsonIn, AskResponse.class);
+
+		List<Integer> itemIds = new ArrayList<>();
+
+		for (Iterator<Map.Entry<String, AskResponse.Query.Results>> it = askResponse.query.results.entrySet().iterator(); it.hasNext();) {
+			Map.Entry<String, AskResponse.Query.Results> entry = it.next();
+			for (int itemID : entry.getValue().printouts.allItemID) {
+				itemIds.add(itemID);
+			}
+		}
+
+		return itemIds;
 	}
-
-
 }
 
