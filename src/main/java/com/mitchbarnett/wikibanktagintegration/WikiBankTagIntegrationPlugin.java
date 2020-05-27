@@ -3,6 +3,11 @@ package com.mitchbarnett.wikibanktagintegration;
 import com.google.common.base.MoreObjects;
 import com.google.gson.Gson;
 import com.google.inject.Provides;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
@@ -23,7 +28,6 @@ import static net.runelite.client.plugins.banktags.BankTagsPlugin.CONFIG_GROUP;
 import static net.runelite.client.plugins.banktags.BankTagsPlugin.TAG_TABS_CONFIG;
 import static net.runelite.client.plugins.banktags.BankTagsPlugin.ICON_SEARCH;
 import java.io.IOException;
-import java.util.*;
 
 
 @Slf4j
@@ -60,7 +64,7 @@ public class WikiBankTagIntegrationPlugin extends Plugin
 	{
 		String[] args = commandExecuted.getArguments();
 
-		if (commandExecuted.getCommand().equals("bt") && args.length == 1)
+		if (commandExecuted.getCommand().equals(config.chatCommand()) && args.length == 1)
 		{
 			addTagsFromCategory(args[0]);
 		}
@@ -85,9 +89,18 @@ public class WikiBankTagIntegrationPlugin extends Plugin
 
 		tagItems(items, category);
 
-		String message = "Added " + category + " tag to " + String.valueOf(items.size()) + " items.";
-		client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", message, "");
-		createTab(category, items.get(0));
+		if (items.size() == 0)
+		{
+			String message = "No items found for category " + category;
+			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", message, "");
+		}
+		else
+		{
+			String message = "Added " + category + " tag to " + String.valueOf(items.size()) + " items.";
+			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", message, "");
+			createTab(category, Collections.min(items));
+		}
+
 	}
 
 	/**
@@ -151,6 +164,9 @@ public class WikiBankTagIntegrationPlugin extends Plugin
 		}
 		catch (IOException e)
 		{
+			String message = "There was an error retriving data";
+			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", message, "");
+
 			log.error(e.getMessage());
 			return Collections.emptyList();
 		}
@@ -180,7 +196,7 @@ public class WikiBankTagIntegrationPlugin extends Plugin
 	 */
 	String createQueryURL(String category)
 	{
-		return "https://oldschool.runescape.wiki/api.php?action=ask&query=[[Category:" + category + "]]" + "|?All+Item+ID&format=json";
+		return "https://oldschool.runescape.wiki/api.php?action=ask&query=[[Category:" + category + "]]|+limit=10000" + "|?All+Item+ID&format=json";
 	}
 
 	/**

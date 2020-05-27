@@ -8,12 +8,12 @@ import net.runelite.client.config.ConfigItem;
 public interface WikiBankTagIntegrationConfig extends Config
 {
 	@ConfigItem(
-		keyName = "greeting",
-		name = "Welcome Greeting",
-		description = "The message to show to the user when they login"
+		keyName = "chatCommand",
+		name = "Chat command",
+		description = "The chat command to use the plugin default is bt"
 	)
-	default String greeting()
+	default String chatCommand()
 	{
-		return "Hello";
+		return "bt";
 	}
 }
