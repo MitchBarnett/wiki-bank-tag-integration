@@ -33,12 +33,22 @@ import net.runelite.client.config.ConfigItem;
 public interface WikiBankTagIntegrationConfig extends Config
 {
 	@ConfigItem(
-		keyName = "chatCommand",
-		name = "Chat command",
-		description = "The chat command to use the plugin default is bt"
+		keyName = "categoryChatCommand",
+		name = "Category chat command",
+		description = "The chat command to  make a tab from a wiki category"
 	)
-	default String chatCommand()
+	default String categoryChatCommand()
 	{
-		return "bt";
+		return "btCat";
+	}
+
+	@ConfigItem(
+		keyName = "dropsChatCommand",
+		name = "Drops chat command",
+		description = "The chat command to make a tab from the drops of a monster"
+	)
+	default String dropsChatCommand()
+	{
+		return "btDrops";
 	}
 }

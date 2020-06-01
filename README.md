@@ -1,21 +1,38 @@
 
 # Wiki Bank Tag Integration
-Allows the creation of bank tags from categories on the offical OSRS wiki
+Allows the creation of bank tags from categories and monsters drops on the offical OSRS wiki
 
 ## Usage
 
-Use the chat command (default is "bt" can be configured) followed by the name of the https://osrs.wiki catetegory you wish
+### Bank tab from wiki category
+Use the chat command (default is "btCat" but can be configured) followed by the name of the https://osrs.wiki catetegory you wish.
+
+### Bank tab from monster drops
+Use the chat command (default is "btDrops" but can be configured) followed by the name of the monster you wish to to tag the drops for.
 
 ## Examples:
+
+### btCat
 The following typed in chat
 
-"::bt ores" will tag all ores and add a bank tab for them.
-"::bt metal_bars" will tag all metal bars and add a bank tab for them.
-![Plugin usage example](https://i.imgur.com/78rYr9T.gif)
+* "::btCat ores" will tag all ores and add a bank tab for them.
+* "::btCat metal_bars" will tag all metal bars and add a bank tab for them.
+![Plugin usage example](https://i.imgur.com/oFGGAAC.gif)
 
+### bt drops
+The following typed in chat
+
+* "::btDrops imp" will tag all imp drops and add a bank tab for them.
+* "::btDrops metal_bars" will tag all metal bars and add a bank tab for them.
+![Plugin usage example](https://i.imgur.com/MvF90dz.gif)
+
+https://i.imgur.com/MvF90dz.gifv
 ## Troubleshooting
-* Category names that are multiple words don't work.
+* Category/monster names that are multiple words don't work.
 	* This is due to subsequent words being counted as different arguments in the command
-	* To fix use underscores in the category name
+	* To fix use underscores in the category/monster name
 	* :x: "::bt quest items"
-  * :heavy_check_mark: "::bt quest_items"
+	* :heavy_check_mark: "::bt giant rat"
+	* :x: "::bt quest items"
+    * :heavy_check_mark: "::bt giant_rat"
+	
