@@ -43,8 +43,8 @@ import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDependency;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.plugins.banktags.BankTagsPlugin;
 import net.runelite.client.plugins.banktags.TagManager;
-import net.runelite.client.plugins.cluescrolls.ClueScrollPlugin;
 import net.runelite.client.util.Text;
 import net.runelite.http.api.RuneLiteAPI;
 import okhttp3.Request;
@@ -59,7 +59,7 @@ import java.io.IOException;
 @PluginDescriptor(
 	name = "Bank Tag Generation"
 )
-@PluginDependency(value = ClueScrollPlugin.class) // Required for bank tags TagManager
+@PluginDependency(value = BankTagsPlugin.class) // Required for bank tags TagManager
 public class WikiBankTagIntegrationPlugin extends Plugin
 {
 	@Inject

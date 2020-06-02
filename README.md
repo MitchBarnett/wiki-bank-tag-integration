@@ -31,8 +31,7 @@ https://i.imgur.com/MvF90dz.gifv
 * Category/monster names that are multiple words don't work.
 	* This is due to subsequent words being counted as different arguments in the command
 	* To fix use underscores in the category/monster name
-	* :x: "::bt quest items"
-	* :heavy_check_mark: "::bt giant rat"
-	* :x: "::bt quest items"
-    * :heavy_check_mark: "::bt giant_rat"
-	
+	* :x: "::btCat quest items"
+	* :heavy_check_mark: "::btCat quest_items"
+	* :x: "::btDrops giant rat"
+    * :heavy_check_mark: "::btDrops giant_rat"
