@@ -215,7 +215,7 @@ public class WikiBankTagIntegrationPlugin extends Plugin
 	{
 		try
 		{
-			String query = "[[category:"+category+"]]|?All+Item+ID";
+			String query = "[[category:"+category+"]]|?All Item ID";
 			String wikiResponse = getWikiResponse(query).body().string();
 			return getIDsFromJSON(wikiResponse);
 		}
@@ -239,7 +239,7 @@ public class WikiBankTagIntegrationPlugin extends Plugin
 	{
 		try
 		{
-			String query = "[[Drop from::"+monster+"]]|?Dropped item.All+Item+ID";
+			String query = "[[Dropped from::"+monster+"]]|?Dropped item.All Item ID";
 			String wikiResponse = getWikiResponse(query).body().string();
 			return getIDsFromJSON(wikiResponse);
 		}
