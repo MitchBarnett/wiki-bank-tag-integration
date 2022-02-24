@@ -32,7 +32,9 @@ public class WikiBankTagIntegrationPluginTest
 {
 	public static void main(String[] args) throws Exception
 	{
+		//noinspection unchecked
 		ExternalPluginManager.loadBuiltin(WikiBankTagIntegrationPlugin.class);
 		RuneLite.main(args);
 	}
+
 }

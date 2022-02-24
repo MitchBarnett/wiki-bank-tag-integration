@@ -26,59 +26,63 @@
 package com.mitchbarnett.wikibanktagintegration;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.Data;
 
 import java.util.List;
 import java.util.Map;
 
-public class AskResponse {
-    @SerializedName("query-continue-offset")
-    public int continueOffset;
-    public Query query;
+interface AskQuery {
+    
+    @Data
+    class Response {
+        @SerializedName("query-continue-offset")
+        private int queryContinueOffset;
+        private Query query;
+    }
 
-    public class Query {
-        List<Request> printrequests;
-        Map<String, Results> results;
-        String serialiser;
-        int version;
-        Meta meta;
+    @Data
+    class Query {
+        @SerializedName("printrequests")
+        private Request[] requests;
+        private Map<String, Results> results;
+        private String serializer;
+        private int version;
+        @SerializedName("meta")
+        private Metadata metadata;
+    }
 
-        public class Request {
-            public String label;
-            public String key;
-            public String redi;
-            public String typeid;
-            public int mode;
-        }
+    @Data
+    class Request {
+        private String label;
+        private String key;
+        private String redi;
+        private String typeid;
+        private int mode;
+    }
 
-        public Map<String, Results> getMasterlist() {
-            return results;
-        }
+    @Data
+    class Metadata {
+        private String hash;
+        private int count;
+        private int offset;
+        private String source;
+        private String time;
+    }
 
-        public void setMasterlist(Map<String, Results> masterlist) {
-            this.results = masterlist;
-        }
+    @Data
+    class Printouts {
+        @SerializedName("All Item ID")
+        private List<Integer> allItemID;
+    }
 
-        public class Results {
-            Printouts printouts;
-            String fulltext;
-            String fullurl;
-            int namespace;
-            String exists;
-            String displaytitle;
-
-            public class Printouts {
-                @SerializedName("All Item ID")
-                List<Integer> allItemID;
-            }
-        }
-
-
-        public class Meta {
-            String hash;
-            int counting;
-            int offset;
-            String source;
-            String time;
-        }
+    @Data
+    class Results {
+        private Printouts printouts;
+        private String fulltext;
+        private String fullurl;
+        private int namespace;
+        private String exists;
+        private String displaytitle;
     }
 }
+

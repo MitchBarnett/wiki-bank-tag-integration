@@ -28,12 +28,6 @@ package com.mitchbarnett.wikibanktagintegration;
 import com.google.common.base.MoreObjects;
 import com.google.gson.Gson;
 import com.google.inject.Provides;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
@@ -46,265 +40,223 @@ import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.plugins.banktags.BankTagsPlugin;
 import net.runelite.client.plugins.banktags.TagManager;
 import net.runelite.client.util.Text;
-import net.runelite.http.api.RuneLiteAPI;
+import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import static net.runelite.client.plugins.banktags.BankTagsPlugin.CONFIG_GROUP;
-import static net.runelite.client.plugins.banktags.BankTagsPlugin.TAG_TABS_CONFIG;
-import static net.runelite.client.plugins.banktags.BankTagsPlugin.ICON_SEARCH;
+
+import javax.inject.Inject;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
+import static net.runelite.client.plugins.banktags.BankTagsPlugin.*;
 
 
 @Slf4j
-@PluginDescriptor(
-	name = "Bank Tag Generation"
-)
-@PluginDependency(value = BankTagsPlugin.class) // Required for bank tags TagManager
-public class WikiBankTagIntegrationPlugin extends Plugin
-{
-	@Inject
-	private Client client;
+@PluginDescriptor(name = "Bank Tag Generation")
+@PluginDependency(value = BankTagsPlugin.class)
+public class WikiBankTagIntegrationPlugin extends Plugin {
 
-	@Inject
-	private WikiBankTagIntegrationConfig config;
+    private static final String WIKI_QUERY_FORMAT = "https://oldschool.runescape.wiki/api.php?action=ask&query=%s|+limit=2000&format=json";
 
-	@Inject
-	private ConfigManager configManager;
+    @Inject
+    private Client client;
 
-	@Inject
-	private TagManager tagManager;
+    @Inject
+    private WikiBankTagIntegrationConfig config;
 
-	@Override
-	protected void startUp() throws Exception
-	{
-	}
+    @Inject
+    private ConfigManager configManager;
 
-	@Override
-	protected void shutDown() throws Exception
-	{
-	}
+    @Inject
+    private TagManager tagManager;
 
-	@Subscribe
-	public void onCommandExecuted(CommandExecuted commandExecuted)
-	{
-		String[] args = commandExecuted.getArguments();
+    @Inject
+    private OkHttpClient httpClient;
 
-		if (commandExecuted.getCommand().equals(config.categoryChatCommand()) && args.length == 1)
-		{
-			addTagsFromCategory(args[0]);
-		}
-		else if (commandExecuted.getCommand().equals(config.dropsChatCommand()) && args.length == 1)
-		{
-			addTagsFromDrops(args[0]);
-		}
-	}
+    @Subscribe
+    public void onCommandExecuted(CommandExecuted commandExecuted) {
+        String[] args = commandExecuted.getArguments();
+        if (commandExecuted.getCommand().equals(config.categoryChatCommand()) && args.length == 1) {
+            addTagsFromCategory(args[0]);
+        } else if (commandExecuted.getCommand().equals(config.dropsChatCommand()) && args.length == 1) {
+            addTagsFromDrops(args[0]);
+        }
+    }
 
-	@Provides
-	WikiBankTagIntegrationConfig provideConfig(ConfigManager configManager)
-	{
-		return configManager.getConfig(WikiBankTagIntegrationConfig.class);
-	}
+    @Provides
+    WikiBankTagIntegrationConfig provideConfig(ConfigManager configManager) {
+        return configManager.getConfig(WikiBankTagIntegrationConfig.class);
+    }
 
-	/**
-	 * Adds a tag of the monster to items found in the provided osrs monster drops
-	 *
-	 * @param monster The name of the osrs wiki category to generate a list of items to tag.
-	 */
-	private void addTagsFromDrops(String monster)
-	{
-		log.info("attempting to add tags to items dropped by " + monster);
+    /**
+     * Adds a tag of the monster to items found in the provided osrs monster drops
+     *
+     * @param monster The name of the osrs wiki category to generate a list of items to tag.
+     */
+    private void addTagsFromDrops(String monster) {
+        log.info("Attempting to add tags to items dropped by {}", monster);
+        int[] items = getDropIDs(monster);
+        tagItems(items, monster + " drops");
+        if (items.length == 0) {
+            String message = String.format("No drops found for %s", monster);
+            client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", message, "");
+        } else {
+            String message = String.format("Added %s drops tag to %s items.", monster, items.length);
+            client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", message, "");
+            createTab(monster + " drops", items[0]);
+        }
+    }
 
-		List<Integer> items = getDropIDs(monster);
+    /**
+     * Adds a tag of the category to items found in the provided osrs wiki category
+     *
+     * @param category The name of the osrs wiki category to generate a list of items to tag.
+     */
+    private void addTagsFromCategory(String category) {
+        log.info("Attempting to add tags to items from {}", category);
+        int[] items = getCategoryIDs(category);
+        tagItems(items, category);
+        if (items.length == 0) {
+            client.addChatMessage(ChatMessageType.GAMEMESSAGE,
+                    "",
+                    String.format("No items found for category %s", category),
+                    "");
+        } else {
+            client.addChatMessage(ChatMessageType.GAMEMESSAGE,
+                    "",
+                    String.format("Added %s tag to %d items.", category, items.length),
+                    "");
+            createTab(category, items[0]);
+        }
 
-		tagItems(items, monster + " drops");
+    }
 
-		if (items.size() == 0)
-		{
-			String message = "No drops found for " + monster;
-			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", message, "");
-		}
-		else
-		{
-			String message = "Added " + monster + " drops tag to " + String.valueOf(items.size()) + " items.";
-			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", message, "");
-			createTab(monster + " drops", Collections.min(items));
-		}
+    /**
+     * Applies a BankTag tag to the provided items
+     *
+     * @param items The item ID's to be tagged
+     * @param tag   the tag to be applied to the items
+     */
+    private void tagItems(int[] items, String tag) {
+        for (int itemID : items) {
+            tagManager.addTag(itemID, tag, false);
+        }
+    }
 
-	}
+    /**
+     * Applies a BankTag tag to the provided items
+     *
+     * @return A list of bank tabs in string format.
+     */
+    private List<String> getAllTabs() {
+        return Text.fromCSV(MoreObjects.firstNonNull(configManager.getConfiguration(CONFIG_GROUP, TAG_TABS_CONFIG), ""));
+    }
 
-	/**
-	 * Adds a tag of the category to items found in the provided osrs wiki category
-	 *
-	 * @param category The name of the osrs wiki category to generate a list of items to tag.
-	 */
-	private void addTagsFromCategory(String category)
-	{
-		log.info("attempting to add tags to items from " + category);
+    /**
+     * Creates a new BankTag tab
+     *
+     * @param tag        The name of the bank tag
+     * @param iconItemId the item ID of the item to be the tab icon
+     */
+    private void createTab(String tag, int iconItemId) {
+        // Bank tags config must be change directly as TagManager is not public
+        //String currentConfig = configManager.getConfiguration(CONFIG_GROUP, TAG_TABS_CONFIG);
 
-		List<Integer> items = getCategoryIDs(category);
+        List<String> tabs = new ArrayList<>(getAllTabs());
+        tabs.add(Text.standardize(tag));
+        String tags = Text.toCSV(tabs);
 
-		tagItems(items, category);
+        configManager.setConfiguration(CONFIG_GROUP, TAG_TABS_CONFIG, tags);
+        configManager.setConfiguration(CONFIG_GROUP, ICON_SEARCH + Text.standardize(tag), iconItemId);
 
-		if (items.size() == 0)
-		{
-			String message = "No items found for category " + category;
-			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", message, "");
-		}
-		else
-		{
-			String message = "Added " + category + " tag to " + String.valueOf(items.size()) + " items.";
-			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", message, "");
-			createTab(category, Collections.min(items));
-		}
+    }
 
-	}
+    /**
+     * Gets the item IDs of all items within a OSRS wiki category
+     *
+     * @param category The name of the OSRS wiki category that will be Item Ids will be generated from
+     * @return A list of Item IDs found for the provided category.
+     */
+    int[] getCategoryIDs(String category) {
+        try {
+            String query = String.format("[[category:%s]]|?All+Item+ID", category);
+            String wikiResponse = Objects.requireNonNull(getWikiResponse(query).body()).string();
+            return getIDsFromJSON(wikiResponse);
+        } catch (IOException e) {
+            if (client != null)
+                client.addChatMessage(ChatMessageType.GAMEMESSAGE,
+                        "",
+                        "There was an error retrieving data",
+                        "");
+            log.error(e.getMessage());
+            return new int[0];
+        }
+    }
 
-	/**
-	 * Applies a BankTag tag to the provided items
-	 *
-	 * @param items A list of ItemIDs to be tagged.
-	 * @param tag   the tag to be applied to the items
-	 */
-	private void tagItems(List<Integer> items, String tag)
-	{
-		for (int itemID : items)
-		{
-			tagManager.addTag(itemID, tag, false);
-		}
+    /**
+     * Gets the item IDs of all items drops by a monster
+     *
+     * @param monster The name of the OSRS monster that will be Item Ids will be generated from
+     * @return A list of Item IDs found for the provided category.
+     */
+    int[] getDropIDs(String monster) {
+        try {
+            String query = String.format("[[Dropped from::%s]]|?Dropped item.All+Item+ID", monster);
+            String wikiResponse = Objects.requireNonNull(getWikiResponse(query).body()).string();
+            return getIDsFromJSON(wikiResponse);
+        } catch (IOException e) {
+            if (client != null)
+                client.addChatMessage(ChatMessageType.GAMEMESSAGE,
+                        "",
+                        "There was an error retrieving data",
+                        "");
+            log.error(e.getMessage());
+            return new int[0];
+        }
+    }
 
-	}
-
-	/**
-	 * Applies a BankTag tag to the provided items
-	 *
-	 * @return A list of bank tabs in string format.
-	 */
-	List<String> getAllTabs()
-	{
-		return Text.fromCSV(MoreObjects.firstNonNull(configManager.getConfiguration(CONFIG_GROUP, TAG_TABS_CONFIG), ""));
-	}
-
-	/**
-	 * Creates a new BankTag tab
-	 *
-	 * @param tag        The name of the bank tag
-	 * @param iconItemId the item ID of the item to be the tab icon
-	 */
-	private void createTab(String tag, int iconItemId)
-	{
-		// Banktags config must be change directly as TagManager is not public
-		//String currentConfig = configManager.getConfiguration(CONFIG_GROUP, TAG_TABS_CONFIG);
-
-		List<String> tabs = new ArrayList<>(getAllTabs());
-		tabs.add(Text.standardize(tag));
-		String tags = Text.toCSV(tabs);
-
-		configManager.setConfiguration(CONFIG_GROUP, TAG_TABS_CONFIG, tags);
-
-		configManager.setConfiguration(CONFIG_GROUP, ICON_SEARCH + Text.standardize(tag), iconItemId);
-
-	}
-
-	/**
-	 * Gets the item IDs of all items within a OSRS wiki category
-	 *
-	 * @param category The name of the OSRS wiki category that will be Item Ids will be generated from
-	 * @return A list of Item IDs found for the provided category.
-	 */
-	private List<Integer> getCategoryIDs(String category)
-	{
-		try
-		{
-			String query = "[[category:"+category+"]]|?All+Item+ID";
-			String wikiResponse = getWikiResponse(query).body().string();
-			return getIDsFromJSON(wikiResponse);
-		}
-		catch (IOException e)
-		{
-			String message = "There was an error retrieving data";
-			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", message, "");
-
-			log.error(e.getMessage());
-			return Collections.emptyList();
-		}
-	}
-
-	/**
-	 * Gets the item IDs of all items drops by a monster
-	 *
-	 * @param monster The name of the OSRS monster that will be Item Ids will be generated from
-	 * @return A list of Item IDs found for the provided category.
-	 */
-	private List<Integer> getDropIDs(String monster)
-	{
-		try
-		{
-			String query = "[[Drop from::"+monster+"]]|?Dropped item.All+Item+ID";
-			String wikiResponse = getWikiResponse(query).body().string();
-			return getIDsFromJSON(wikiResponse);
-		}
-		catch (IOException e)
-		{
-			String message = "There was an error retriving data";
-			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", message, "");
-
-			log.error(e.getMessage());
-			return Collections.emptyList();
-		}
-	}
-
-	/**
-	 * Makes and returns results for an ask Query the OSRS wiki for all item IDs in the provided category
-	 *
-	 * @param category The name of the OSRS wiki category that will be Item Ids will be generated from
-	 * @return A okhttp3 HTTP response containing the results of a ask query in JSON format
-	 */
-	private Response getWikiResponse(String query) throws IOException
-	{
-		Request request = new Request.Builder()
-			.url(createQueryURL(query))
-			.build();
-
-		return RuneLiteAPI.CLIENT.newCall(request).execute();
-	}
+    /**
+     * Queries the OSRS wiki and returns the response
+     *
+     * @param category The category query string
+     * @return The results of the query
+     */
+    private Response getWikiResponse(String category) throws IOException {
+        Request request = new Request.Builder()
+                .url(createQueryURL(category))
+                .build();
+        return httpClient.newCall(request).execute();
+    }
 
 
-	/**
-	 * Makes a query URL to get all item IDs in the supplied category
-	 *
-	 * @param query The query to be used
-	 * @return The full query URL
-	 */
-	String createQueryURL(String query)
-	{
-		return "https://oldschool.runescape.wiki/api.php?action=ask&query="+query+"|+limit=2000&format=json";
-	}
+    /**
+     * Constructs the URL of the specified query string
+     *
+     * @param query The query to be used
+     * @return The full query URL
+     */
+    private String createQueryURL(String query) {
+        return String.format(WIKI_QUERY_FORMAT, query);
+    }
 
-	/**
-	 * Extracts ItemIDs from a JSON HTTP response. The JSON must be in the format that returned by a query that uses the
-	 * createQueryURL so it can be parsed into an AskResponse.
-	 *
-	 * @param jsonIn The JSON as a string. It must be in the correct format.
-	 * @return A list of the item IDs pulled from the JSON results.
-	 * @see AskResponse
-	 */
-	List<Integer> getIDsFromJSON(String jsonIn)
-	{
-		Gson gson = new Gson();
-		AskResponse askResponse = gson.fromJson(jsonIn, AskResponse.class);
-
-		List<Integer> itemIDs = new ArrayList<>();
-
-		for (Iterator<Map.Entry<String, AskResponse.Query.Results>> it = askResponse.query.results.entrySet().iterator(); it.hasNext(); )
-		{
-			Map.Entry<String, AskResponse.Query.Results> entry = it.next();
-			for (int itemID : entry.getValue().printouts.allItemID)
-			{
-				itemIDs.add(itemID);
-			}
-		}
-
-		return itemIDs;
-	}
+    /**
+     * Extracts ItemIDs from a JSON HTTP response.
+     *
+     * @param jsonIn The JSON as a string. It must be in the correct format.
+     * @return A list of the item IDs pulled from the JSON results.
+     * @see AskQuery.Response
+     */
+    private int[] getIDsFromJSON(String jsonIn) {
+        Gson gson = new Gson();
+        AskQuery.Response askResponse = gson.fromJson(jsonIn, AskQuery.Response.class);
+        return askResponse.getQuery().getResults().values()
+                .stream()
+                .flatMap(v -> v.getPrintouts().getAllItemID().stream())
+                .mapToInt(x -> x)
+                .distinct()
+                .toArray();
+    }
 }
 
