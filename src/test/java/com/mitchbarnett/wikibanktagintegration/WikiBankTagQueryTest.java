@@ -24,6 +24,12 @@ public class WikiBankTagQueryTest {
         Assert.assertTrue(
                 "Failed to query by category",
                 plugin.getCategoryIDs("ores").length > 0);
+        Assert.assertTrue(
+                "Failed to query by category",
+                plugin.getCategoryIDs("Members' items").length > 0);
+        Assert.assertTrue(
+                "Failed to query by category",
+                plugin.getCategoryIDs("Non-GE items").length > 0);
     }
 
     @Test
@@ -31,6 +37,12 @@ public class WikiBankTagQueryTest {
         Assert.assertTrue(
                 "Failed to query by monster",
                 plugin.getDropIDs("imp").length > 0);
+        Assert.assertTrue(
+                "Failed to query by monster",
+                plugin.getDropIDs("Rune dragon").length > 0);
+        Assert.assertTrue(
+                "Failed to query by monster",
+                plugin.getDropIDs("Rune_dragon").length > 0);
     }
 
 }

@@ -46,6 +46,7 @@ import okhttp3.Response;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -78,10 +79,10 @@ public class WikiBankTagIntegrationPlugin extends Plugin {
     @Subscribe
     public void onCommandExecuted(CommandExecuted commandExecuted) {
         String[] args = commandExecuted.getArguments();
-        if (commandExecuted.getCommand().equals(config.categoryChatCommand()) && args.length == 1) {
-            addTagsFromCategory(args[0]);
-        } else if (commandExecuted.getCommand().equals(config.dropsChatCommand()) && args.length == 1) {
-            addTagsFromDrops(args[0]);
+        if (commandExecuted.getCommand().equals(config.categoryChatCommand()) && args.length > 0) {
+            addTagsFromCategory(String.join(" ", args));
+        } else if (commandExecuted.getCommand().equals(config.dropsChatCommand()) && args.length > 0) {
+            addTagsFromDrops(String.join(" ", args));
         }
     }
 
@@ -181,7 +182,8 @@ public class WikiBankTagIntegrationPlugin extends Plugin {
      */
     int[] getCategoryIDs(String category) {
         try {
-            String query = String.format("[[category:%s]]|?All+Item+ID", category);
+            String safe_query = URLEncoder.encode(category, "UTF-8");
+            String query = String.format("[[category:%s]]|?All+Item+ID", safe_query);
             String wikiResponse = Objects.requireNonNull(getWikiResponse(query).body()).string();
             return getIDsFromJSON(wikiResponse);
         } catch (IOException e) {
@@ -203,7 +205,8 @@ public class WikiBankTagIntegrationPlugin extends Plugin {
      */
     int[] getDropIDs(String monster) {
         try {
-            String query = String.format("[[Dropped from::%s]]|?Dropped item.All+Item+ID", monster);
+            String safe_query = URLEncoder.encode(monster, "UTF-8");
+            String query = String.format("[[Dropped from::%s]]|?Dropped item.All+Item+ID", safe_query);
             String wikiResponse = Objects.requireNonNull(getWikiResponse(query).body()).string();
             return getIDsFromJSON(wikiResponse);
         } catch (IOException e) {
