@@ -5,7 +5,7 @@ Allows the creation of bank tags from categories and monsters drops on the offic
 ## Usage
 
 ### Bank tab from wiki category
-Use the chat command (default is "btCat" but can be configured) followed by the name of the https://osrs.wiki catetegory you wish.
+Use the chat command (default is "btCat" but can be configured) followed by the name of the [OSRS Wiki category](https://oldschool.runescape.wiki/w/Special:Categories) you wish.
 
 ### Bank tab from monster drops
 Use the chat command (default is "btDrops" but can be configured) followed by the name of the monster you wish to to tag the drops for.
