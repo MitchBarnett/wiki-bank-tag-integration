@@ -1,4 +1,4 @@
-package net.runelite.client.plugins.wikibanktagintegration.src.test.java.com.mitchbarnett.wikibanktagintegration;
+package com.mitchbarnett.wikibanktagintegration;
 
 /*
  * Copyright (c) 2020 Mitch Barnett <mitch@mitchbarnett.com Discord: Wizard Mitch#5072 Reddit: Wizard_Mitch>
@@ -27,7 +27,7 @@ package net.runelite.client.plugins.wikibanktagintegration.src.test.java.com.mit
 
 import net.runelite.client.RuneLite;
 import net.runelite.client.externalplugins.ExternalPluginManager;
-import net.runelite.client.plugins.wikibanktagintegration.src.main.java.com.mitchbarnett.wikibanktagintegration.WikiBankTagIntegrationPlugin;
+import com.mitchbarnett.wikibanktagintegration.WikiBankTagIntegrationPlugin;
 
 public class WikiBankTagIntegrationPluginTest
 {

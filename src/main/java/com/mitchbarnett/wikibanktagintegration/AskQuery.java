@@ -1,3 +1,5 @@
+package com.mitchbarnett.wikibanktagintegration;
+
 /*
  * Copyright (c) 2020 Mitch Barnett <mitch@mitchbarnett.com Discord: Wizard Mitch#5072 Reddit: Wizard_Mitch>
  * All rights reserved.
@@ -22,8 +24,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-package net.runelite.client.plugins.wikibanktagintegration.src.main.java.com.mitchbarnett.wikibanktagintegration;
 
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
