@@ -1,5 +1,6 @@
-package com.mitchbarnett.wikibanktagintegration;
+package net.runelite.client.plugins.wikibanktagintegration.src.test.java.com.mitchbarnett.wikibanktagintegration;
 
+import net.runelite.client.plugins.wikibanktagintegration.src.main.java.com.mitchbarnett.wikibanktagintegration.WikiBankTagIntegrationPlugin;
 import okhttp3.OkHttpClient;
 import org.junit.Assert;
 import org.junit.Before;

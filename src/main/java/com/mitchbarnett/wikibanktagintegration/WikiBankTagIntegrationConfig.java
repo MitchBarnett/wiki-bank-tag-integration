@@ -1,3 +1,5 @@
+package net.runelite.client.plugins.wikibanktagintegration.src.main.java.com.mitchbarnett.wikibanktagintegration;
+
 /*
  * Copyright (c) 2020 Mitch Barnett <mitch@mitchbarnett.com Discord: Wizard Mitch#5072 Reddit: Wizard_Mitch>
  * All rights reserved.
@@ -23,8 +25,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.mitchbarnett.wikibanktagintegration;
-
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
@@ -32,23 +32,23 @@ import net.runelite.client.config.ConfigItem;
 @ConfigGroup("wikibanktagintegration")
 public interface WikiBankTagIntegrationConfig extends Config
 {
-	@ConfigItem(
-		keyName = "categoryChatCommand",
-		name = "Category chat command",
-		description = "The chat command to  make a tab from a wiki category"
-	)
-	default String categoryChatCommand()
-	{
-		return "btCat";
-	}
+    @ConfigItem(
+            keyName = "categoryChatCommand",
+            name = "Category chat command",
+            description = "The chat command to  make a tab from a wiki category"
+    )
+    default String categoryChatCommand()
+    {
+        return "btCat";
+    }
 
-	@ConfigItem(
-		keyName = "dropsChatCommand",
-		name = "Drops chat command",
-		description = "The chat command to make a tab from the drops of a monster"
-	)
-	default String dropsChatCommand()
-	{
-		return "btDrops";
-	}
+    @ConfigItem(
+            keyName = "dropsChatCommand",
+            name = "Drops chat command",
+            description = "The chat command to make a tab from the drops of a monster"
+    )
+    default String dropsChatCommand()
+    {
+        return "btDrops";
+    }
 }

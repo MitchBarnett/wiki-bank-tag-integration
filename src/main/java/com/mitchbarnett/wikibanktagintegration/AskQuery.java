@@ -23,7 +23,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.mitchbarnett.wikibanktagintegration;
+package net.runelite.client.plugins.wikibanktagintegration.src.main.java.com.mitchbarnett.wikibanktagintegration;
 
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Map;
 
 interface AskQuery {
-    
+
     @Data
     class Response {
         @SerializedName("query-continue-offset")
@@ -85,4 +85,3 @@ interface AskQuery {
         private String displaytitle;
     }
 }
-
