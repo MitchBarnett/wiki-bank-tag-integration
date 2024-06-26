@@ -27,6 +27,7 @@ package net.runelite.client.plugins.wikibanktagintegration.src.main.java.com.mit
 
 import com.google.common.base.MoreObjects;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Provides;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
