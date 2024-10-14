@@ -106,7 +106,7 @@ public class WikiBankTagIntegrationPlugin extends Plugin {
         } else {
             String message = String.format("Added %s drops tag to %s items.", monster, items.length);
             client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", message, "");
-            createTabDrops(monster + " drops", items[0]);
+            createTab(monster + " drops", items[0]);
         }
     }
 
