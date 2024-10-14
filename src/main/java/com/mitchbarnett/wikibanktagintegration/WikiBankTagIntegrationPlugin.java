@@ -106,7 +106,7 @@ public class WikiBankTagIntegrationPlugin extends Plugin {
         } else {
             String message = String.format("Added %s drops tag to %s items.", monster, items.length);
             client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", message, "");
-            createTab(monster + " drops", items[0]);
+            createTabDrops(monster + " drops", items[0]);
         }
     }
 
@@ -170,10 +170,21 @@ public class WikiBankTagIntegrationPlugin extends Plugin {
         String tags = Text.toCSV(tabs);
 
         configManager.setConfiguration(CONFIG_GROUP, TAG_TABS_CONFIG, tags);
-        configManager.setConfiguration(CONFIG_GROUP, ICON_SEARCH + Text.standardize(tag), iconItemId);
+        configManager.setConfiguration(CONFIG_GROUP, TAG_ICON_PREFIX + Text.standardize(tag), iconItemId);
 
     }
+    private void createTabDrops(String tag, String NPCName) {
+        // Bank tags config must be change directly as TagManager is not public
+        //String currentConfig = configManager.getConfiguration(CONFIG_GROUP, TAG_TABS_CONFIG);
 
+        List<String> tabs = new ArrayList<>(getAllTabs());
+        tabs.add(Text.standardize(tag));
+        String tags = Text.toCSV(tabs);
+
+        configManager.setConfiguration(CONFIG_GROUP, TAG_TABS_CONFIG, tags);
+        configManager.setConfiguration(CONFIG_GROUP, TAG_ICON_PREFIX + Text.standardize(tag), NPCName);
+
+    }
     /**
      * Gets the item IDs of all items within a OSRS wiki category
      *
@@ -206,7 +217,7 @@ public class WikiBankTagIntegrationPlugin extends Plugin {
     int[] getDropIDs(String monster) {
         try {
             String safe_query = URLEncoder.encode(monster, "UTF-8");
-            String query = String.format("[[Dropped from::%s]]|?Dropped item.All+Item+ID", safe_query);
+            String query = String.format("[[Dropped from::%s]]|?Dropped item page.All+Item+ID", safe_query);
             String wikiResponse = Objects.requireNonNull(getWikiResponse(query).body()).string();
             return getIDsFromJSON(wikiResponse);
         } catch (IOException e) {

@@ -35,7 +35,7 @@ public interface WikiBankTagIntegrationConfig extends Config
 	@ConfigItem(
 		keyName = "categoryChatCommand",
 		name = "Category chat command",
-		description = "The chat command to  make a tab from a wiki category"
+		description = "The chat command to  make a tab from a wiki category Default: btCat Usage: Type in chat \"::btCat Category\""
 	)
 	default String categoryChatCommand()
 	{
@@ -45,7 +45,7 @@ public interface WikiBankTagIntegrationConfig extends Config
 	@ConfigItem(
 		keyName = "dropsChatCommand",
 		name = "Drops chat command",
-		description = "The chat command to make a tab from the drops of a monster"
+		description = "The chat command to make a tab from the drops of a monster Default: btDrops Usage: Type in chat \"::btDrops NPC\""
 	)
 	default String dropsChatCommand()
 	{
