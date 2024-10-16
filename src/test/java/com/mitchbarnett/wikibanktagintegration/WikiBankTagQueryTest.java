@@ -1,5 +1,6 @@
 package com.mitchbarnett.wikibanktagintegration;
 
+import com.mitchbarnett.wikibanktagintegration.WikiBankTagIntegrationPlugin;
 import okhttp3.OkHttpClient;
 import org.junit.Assert;
 import org.junit.Before;

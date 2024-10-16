@@ -1,3 +1,5 @@
+package com.mitchbarnett.wikibanktagintegration;
+
 /*
  * Copyright (c) 2020 Mitch Barnett <mitch@mitchbarnett.com Discord: Wizard Mitch#5072 Reddit: Wizard_Mitch>
  * All rights reserved.
@@ -23,10 +25,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.mitchbarnett.wikibanktagintegration;
-
 import com.google.common.base.MoreObjects;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Provides;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
@@ -60,6 +61,7 @@ import static net.runelite.client.plugins.banktags.BankTagsPlugin.*;
 public class WikiBankTagIntegrationPlugin extends Plugin {
 
     private static final String WIKI_QUERY_FORMAT = "https://oldschool.runescape.wiki/api.php?action=ask&query=%s|+limit=2000&format=json";
+    private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
     @Inject
     private Client client;
@@ -170,7 +172,7 @@ public class WikiBankTagIntegrationPlugin extends Plugin {
         String tags = Text.toCSV(tabs);
 
         configManager.setConfiguration(CONFIG_GROUP, TAG_TABS_CONFIG, tags);
-        configManager.setConfiguration(CONFIG_GROUP, ICON_SEARCH + Text.standardize(tag), iconItemId);
+        configManager.setConfiguration(CONFIG_GROUP, TAG_ICON_PREFIX + Text.standardize(tag), iconItemId);
 
     }
 
@@ -180,7 +182,7 @@ public class WikiBankTagIntegrationPlugin extends Plugin {
      * @param category The name of the OSRS wiki category that will be Item Ids will be generated from
      * @return A list of Item IDs found for the provided category.
      */
-    int[] getCategoryIDs(String category) {
+    public int[] getCategoryIDs(String category) {
         try {
             String safe_query = URLEncoder.encode(category, "UTF-8");
             String query = String.format("[[category:%s]]|?All+Item+ID", safe_query);
@@ -203,10 +205,10 @@ public class WikiBankTagIntegrationPlugin extends Plugin {
      * @param monster The name of the OSRS monster that will be Item Ids will be generated from
      * @return A list of Item IDs found for the provided category.
      */
-    int[] getDropIDs(String monster) {
+    public int[] getDropIDs(String monster) {
         try {
             String safe_query = URLEncoder.encode(monster, "UTF-8");
-            String query = String.format("[[Dropped from::%s]]|?Dropped item.All+Item+ID", safe_query);
+            String query = String.format("[[Dropped from::%s]]|?Dropped item page.All+Item+ID", safe_query);
             String wikiResponse = Objects.requireNonNull(getWikiResponse(query).body()).string();
             return getIDsFromJSON(wikiResponse);
         } catch (IOException e) {
@@ -252,7 +254,6 @@ public class WikiBankTagIntegrationPlugin extends Plugin {
      * @see AskQuery.Response
      */
     private int[] getIDsFromJSON(String jsonIn) {
-        Gson gson = new Gson();
         AskQuery.Response askResponse = gson.fromJson(jsonIn, AskQuery.Response.class);
         return askResponse.getQuery().getResults().values()
                 .stream()
@@ -262,4 +263,3 @@ public class WikiBankTagIntegrationPlugin extends Plugin {
                 .toArray();
     }
 }
-

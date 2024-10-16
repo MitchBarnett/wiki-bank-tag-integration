@@ -1,3 +1,5 @@
+package com.mitchbarnett.wikibanktagintegration;
+
 /*
  * Copyright (c) 2020 Mitch Barnett <mitch@mitchbarnett.com Discord: Wizard Mitch#5072 Reddit: Wizard_Mitch>
  * All rights reserved.
@@ -23,18 +25,17 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.mitchbarnett.wikibanktagintegration;
-
 import net.runelite.client.RuneLite;
 import net.runelite.client.externalplugins.ExternalPluginManager;
+import com.mitchbarnett.wikibanktagintegration.WikiBankTagIntegrationPlugin;
 
 public class WikiBankTagIntegrationPluginTest
 {
-	public static void main(String[] args) throws Exception
-	{
-		//noinspection unchecked
-		ExternalPluginManager.loadBuiltin(WikiBankTagIntegrationPlugin.class);
-		RuneLite.main(args);
-	}
+    public static void main(String[] args) throws Exception
+    {
+        //noinspection unchecked
+        ExternalPluginManager.loadBuiltin(WikiBankTagIntegrationPlugin.class);
+        RuneLite.main(args);
+    }
 
 }
