@@ -24,7 +24,6 @@ The following typed in chat
 The following typed in chat
 
 * "::btDrops imp" will tag all imp drops and add a bank tab for them.
-* "::btDrops metal_bars" will tag all metal bars and add a bank tab for them.
 ![Plugin usage example](https://i.imgur.com/MvF90dz.gif)
 
 https://i.imgur.com/MvF90dz.gifv
