@@ -172,7 +172,7 @@ public class WikiBankTagIntegrationPlugin extends Plugin {
         String tags = Text.toCSV(tabs);
 
         configManager.setConfiguration(CONFIG_GROUP, TAG_TABS_CONFIG, tags);
-        configManager.setConfiguration(CONFIG_GROUP, ICON_SEARCH + Text.standardize(tag), iconItemId);
+        configManager.setConfiguration(CONFIG_GROUP, TAG_ICON_PREFIX + Text.standardize(tag), iconItemId);
 
     }
 
@@ -208,7 +208,7 @@ public class WikiBankTagIntegrationPlugin extends Plugin {
     public int[] getDropIDs(String monster) {
         try {
             String safe_query = URLEncoder.encode(monster, "UTF-8");
-            String query = String.format("[[Dropped from::%s]]|?Dropped item.All+Item+ID", safe_query);
+            String query = String.format("[[Dropped from::%s]]|?Dropped item page.All+Item+ID", safe_query);
             String wikiResponse = Objects.requireNonNull(getWikiResponse(query).body()).string();
             return getIDsFromJSON(wikiResponse);
         } catch (IOException e) {
