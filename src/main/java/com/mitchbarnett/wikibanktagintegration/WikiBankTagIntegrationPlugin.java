@@ -33,6 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.events.CommandExecuted;
+import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
@@ -44,11 +45,14 @@ import net.runelite.client.util.Text;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.Call;
+import okhttp3.Callback;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.function.Consumer;
 import java.util.List;
 import java.util.Objects;
 
@@ -73,6 +77,9 @@ public class WikiBankTagIntegrationPlugin extends Plugin {
 
     @Inject
     private TagManager tagManager;
+
+    @Inject
+    private ClientThread clientThread;
 
     @Inject
     private OkHttpClient httpClient;
@@ -102,17 +109,21 @@ public class WikiBankTagIntegrationPlugin extends Plugin {
      */
     private void addTagsFromDrops(String monster) {
         log.info("Attempting to add tags to items dropped by {}", monster);
-        int[] items = getDropIDs(monster);
-        tagItems(items, monster + " drops");
-        if (items.length == 0) {
-            String message = String.format("No drops found for %s", monster);
-            client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", message, "");
-        } else {
-            String message = String.format("Added %s drops tag to %s items.", monster, items.length);
-            client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", message, "");
-            createTab(monster + " drops", items[0]);
-        }
+        getDropIDs(monster, items -> {
+            clientThread.invokeLater(() -> {
+                tagItems(items, monster + " drops");
+                if (items.length == 0) {
+                    String message = String.format("No drops found for %s", monster);
+                    client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", message, "");
+                } else {
+                    String message = String.format("Added %s drops tag to %s items.", monster, items.length);
+                    client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", message, "");
+                    createTab(monster + " drops", items[0]);
+                }
+            });
+        });
     }
+
 
     /**
      * Adds a tag of the category to items found in the provided osrs wiki category
@@ -121,22 +132,25 @@ public class WikiBankTagIntegrationPlugin extends Plugin {
      */
     private void addTagsFromCategory(String category) {
         log.info("Attempting to add tags to items from {}", category);
-        int[] items = getCategoryIDs(category);
-        tagItems(items, category);
-        if (items.length == 0) {
-            client.addChatMessage(ChatMessageType.GAMEMESSAGE,
-                    "",
-                    String.format("No items found for category %s", category),
-                    "");
-        } else {
-            client.addChatMessage(ChatMessageType.GAMEMESSAGE,
-                    "",
-                    String.format("Added %s tag to %d items.", category, items.length),
-                    "");
-            createTab(category, items[0]);
-        }
-
+        getCategoryIDs(category, items -> {
+            clientThread.invokeLater(() -> {
+                tagItems(items, category);
+                if (items.length == 0) {
+                    client.addChatMessage(ChatMessageType.GAMEMESSAGE,
+                            "",
+                            String.format("No items found for category %s", category),
+                            "");
+                } else {
+                    client.addChatMessage(ChatMessageType.GAMEMESSAGE,
+                            "",
+                            String.format("Added %s tag to %d items.", category, items.length),
+                            "");
+                    createTab(category, items[0]);
+                }
+            });
+        });
     }
+
 
     /**
      * Applies a BankTag tag to the provided items
@@ -184,22 +198,31 @@ public class WikiBankTagIntegrationPlugin extends Plugin {
      * @param category The name of the OSRS wiki category that will be Item Ids will be generated from
      * @return A list of Item IDs found for the provided category.
      */
-    public int[] getCategoryIDs(String category) {
+    public void getCategoryIDs(String category, Consumer<int[]> callback) {
         try {
             String safe_query = URLEncoder.encode(category, "UTF-8");
             String query = String.format("[[category:%s]]|?All+Item+ID", safe_query);
-            String wikiResponse = Objects.requireNonNull(getWikiResponse(query).body()).string();
-            return getIDsFromJSON(wikiResponse);
+            getWikiResponse(query, new okhttp3.Callback() {
+                @Override
+                public void onFailure(Call call, IOException e) {
+                    log.error("Error fetching category IDs: {}", e.getMessage());
+                    callback.accept(new int[0]); // Pass empty array to callback
+                }
+
+                @Override
+                public void onResponse(Call call, Response response) throws IOException {
+                    String wikiResponse = response.body().string();
+                    int[] ids = getIDsFromJSON(wikiResponse);
+                    callback.accept(ids);
+                }
+            });
         } catch (IOException e) {
-            if (client != null)
-                client.addChatMessage(ChatMessageType.GAMEMESSAGE,
-                        "",
-                        "There was an error retrieving data",
-                        "");
-            log.error(e.getMessage());
-            return new int[0];
+            log.error("Error encoding category: {}", e.getMessage());
+            callback.accept(new int[0]); // Pass empty array to callback
         }
     }
+
+
 
     /**
      * Gets the item IDs of all items drops by a monster
@@ -207,20 +230,27 @@ public class WikiBankTagIntegrationPlugin extends Plugin {
      * @param monster The name of the OSRS monster that will be Item Ids will be generated from
      * @return A list of Item IDs found for the provided category.
      */
-    public int[] getDropIDs(String monster) {
+    public void getDropIDs(String monster, Consumer<int[]> callback) {
         try {
             String safe_query = URLEncoder.encode(monster, "UTF-8");
             String query = String.format("[[Dropped from::%s]]|?Dropped item page.All+Item+ID", safe_query);
-            String wikiResponse = Objects.requireNonNull(getWikiResponse(query).body()).string();
-            return getIDsFromJSON(wikiResponse);
+            getWikiResponse(query, new okhttp3.Callback() {
+                @Override
+                public void onFailure(Call call, IOException e) {
+                    log.error("Error fetching drop IDs: {}", e.getMessage());
+                    callback.accept(new int[0]); // Pass empty array to callback
+                }
+
+                @Override
+                public void onResponse(Call call, Response response) throws IOException {
+                    String wikiResponse = response.body().string();
+                    int[] ids = getIDsFromJSON(wikiResponse);
+                    callback.accept(ids);
+                }
+            });
         } catch (IOException e) {
-            if (client != null)
-                client.addChatMessage(ChatMessageType.GAMEMESSAGE,
-                        "",
-                        "There was an error retrieving data",
-                        "");
-            log.error(e.getMessage());
-            return new int[0];
+            log.error("Error encoding monster name: {}", e.getMessage());
+            callback.accept(new int[0]); // Pass empty array to callback
         }
     }
 
@@ -228,13 +258,12 @@ public class WikiBankTagIntegrationPlugin extends Plugin {
      * Queries the OSRS wiki and returns the response
      *
      * @param category The category query string
-     * @return The results of the query
      */
-    private Response getWikiResponse(String category) throws IOException {
+    private void getWikiResponse(String category, okhttp3.Callback callback) {
         Request request = new Request.Builder()
                 .url(createQueryURL(category))
                 .build();
-        return httpClient.newCall(request).execute();
+        httpClient.newCall(request).enqueue(callback);
     }
 
 
