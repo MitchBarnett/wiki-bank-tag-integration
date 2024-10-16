@@ -61,7 +61,6 @@ import static net.runelite.client.plugins.banktags.BankTagsPlugin.*;
 public class WikiBankTagIntegrationPlugin extends Plugin {
 
     private static final String WIKI_QUERY_FORMAT = "https://oldschool.runescape.wiki/api.php?action=ask&query=%s|+limit=2000&format=json";
-    private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
     @Inject
     private Client client;
@@ -77,6 +76,9 @@ public class WikiBankTagIntegrationPlugin extends Plugin {
 
     @Inject
     private OkHttpClient httpClient;
+
+    @Inject
+    private Gson gson;
 
     @Subscribe
     public void onCommandExecuted(CommandExecuted commandExecuted) {
