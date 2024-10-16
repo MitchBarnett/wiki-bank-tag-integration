@@ -27,7 +27,7 @@ jobs:
     - uses: actions/setup-java@v4
       with:
         distribution: adopt
-        java-version: 11    - name: Setup Gradle
+        java-version: 11    
 
     - name: prepare
       run: |
