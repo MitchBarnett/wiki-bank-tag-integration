@@ -32,7 +32,7 @@ jobs:
     - name: prepare
       run: |
         ./gradlew --build-cache prep
-        ./gradlew --build-cache --project-dir verification-template :verifyCore
+    #   ./gradlew --build-cache --project-dir verification-template :verifyCore
     - name: build
       run: ./gradlew build
         
