@@ -177,7 +177,18 @@ public class WikiBankTagIntegrationPlugin extends Plugin {
         configManager.setConfiguration(CONFIG_GROUP, TAG_ICON_PREFIX + Text.standardize(tag), iconItemId);
 
     }
+    private void createTabDrops(String tag, String NPCName) {
+        // Bank tags config must be change directly as TagManager is not public
+        //String currentConfig = configManager.getConfiguration(CONFIG_GROUP, TAG_TABS_CONFIG);
 
+        List<String> tabs = new ArrayList<>(getAllTabs());
+        tabs.add(Text.standardize(tag));
+        String tags = Text.toCSV(tabs);
+
+        configManager.setConfiguration(CONFIG_GROUP, TAG_TABS_CONFIG, tags);
+        configManager.setConfiguration(CONFIG_GROUP, TAG_ICON_PREFIX + Text.standardize(tag), NPCName);
+
+    }
     /**
      * Gets the item IDs of all items within a OSRS wiki category
      *

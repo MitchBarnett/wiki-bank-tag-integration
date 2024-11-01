@@ -17,7 +17,8 @@ The following typed in chat
 
 * "::btCat ores" will tag all ores and add a bank tab for them.
 * "::btCat metal_bars" will tag all metal bars and add a bank tab for them.
-* "::btCat melee_weapons||melee_armour" will tag all melee weapons and armour and add a bank tab for them.
+* "::btCat ores||metal_bars" will tag all ores and metal bars and add a bank tab for them.
+
 ![Plugin usage example](https://i.imgur.com/oFGGAAC.gif)
 
 ### bt drops
