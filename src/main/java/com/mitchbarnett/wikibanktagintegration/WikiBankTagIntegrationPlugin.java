@@ -1,3 +1,5 @@
+package com.mitchbarnett.wikibanktagintegration;
+
 /*
  * Copyright (c) 2020 Mitch Barnett <mitch@mitchbarnett.com Discord: Wizard Mitch#5072 Reddit: Wizard_Mitch>
  * All rights reserved.
@@ -23,10 +25,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.mitchbarnett.wikibanktagintegration;
-
 import com.google.common.base.MoreObjects;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Provides;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
@@ -75,6 +76,9 @@ public class WikiBankTagIntegrationPlugin extends Plugin {
 
     @Inject
     private OkHttpClient httpClient;
+
+    @Inject
+    private Gson gson;
 
     @Subscribe
     public void onCommandExecuted(CommandExecuted commandExecuted) {
@@ -191,7 +195,7 @@ public class WikiBankTagIntegrationPlugin extends Plugin {
      * @param category The name of the OSRS wiki category that will be Item Ids will be generated from
      * @return A list of Item IDs found for the provided category.
      */
-    int[] getCategoryIDs(String category) {
+    public int[] getCategoryIDs(String category) {
         try {
             String safe_query = URLEncoder.encode(category, "UTF-8");
             String query = String.format("[[category:%s]]|?All+Item+ID", safe_query);
@@ -214,7 +218,7 @@ public class WikiBankTagIntegrationPlugin extends Plugin {
      * @param monster The name of the OSRS monster that will be Item Ids will be generated from
      * @return A list of Item IDs found for the provided category.
      */
-    int[] getDropIDs(String monster) {
+    public int[] getDropIDs(String monster) {
         try {
             String safe_query = URLEncoder.encode(monster, "UTF-8");
             String query = String.format("[[Dropped from::%s]]|?Dropped item page.All+Item+ID", safe_query);
@@ -263,7 +267,6 @@ public class WikiBankTagIntegrationPlugin extends Plugin {
      * @see AskQuery.Response
      */
     private int[] getIDsFromJSON(String jsonIn) {
-        Gson gson = new Gson();
         AskQuery.Response askResponse = gson.fromJson(jsonIn, AskQuery.Response.class);
         return askResponse.getQuery().getResults().values()
                 .stream()
@@ -273,4 +276,3 @@ public class WikiBankTagIntegrationPlugin extends Plugin {
                 .toArray();
     }
 }
-
