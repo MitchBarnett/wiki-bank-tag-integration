@@ -1,14 +1,14 @@
 
 # Wiki Bank Tag Integration
-Allows the creation of bank tags from categories and monsters drops on the offical OSRS wiki
+Allows the creation of bank tags from categories and monsters drops on the official OSRS wiki
 
 ## Usage
 
 ### Bank tab from wiki category
-Use the chat command (default is "btCat" but can be configured) followed by the name of the https://osrs.wiki catetegory you wish. Double pipes (`||`) can be used to combine multiple categories.
+Use the chat command (default is "btCat" but can be configured) followed by the name of the https://osrs.wiki category you wish. Double pipes (`||`) can be used to combine multiple categories.
 
 ### Bank tab from monster drops
-Use the chat command (default is "btDrops" but can be configured) followed by the name of the monster you wish to to tag the drops for.
+Use the chat command (default is "btDrops" but can be configured) followed by the name of the monster you wish to tag the drops for.
 
 ## Examples:
 
