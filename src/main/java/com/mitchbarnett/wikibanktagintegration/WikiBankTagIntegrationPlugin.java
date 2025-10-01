@@ -27,7 +27,6 @@ package com.mitchbarnett.wikibanktagintegration;
 
 import com.google.common.base.MoreObjects;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.inject.Provides;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
@@ -46,15 +45,12 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.Call;
-import okhttp3.Callback;
 
 import javax.inject.Inject;
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.function.Consumer;
-import java.util.List;
-import java.util.Objects;
+import java.util.stream.IntStream;
 
 import static net.runelite.client.plugins.banktags.BankTagsPlugin.*;
 
@@ -64,7 +60,7 @@ import static net.runelite.client.plugins.banktags.BankTagsPlugin.*;
 @PluginDependency(value = BankTagsPlugin.class)
 public class WikiBankTagIntegrationPlugin extends Plugin {
 
-    private static final String WIKI_QUERY_FORMAT = "https://oldschool.runescape.wiki/api.php?action=ask&query=%s|+limit=2000&format=json";
+    private static final String WIKI_BUCKET_QUERY_FORMAT = "https://oldschool.runescape.wiki/api.php?action=bucket&query=%s.limit(2000).run()&format=json";
 
     @Inject
     private Client client;
@@ -90,9 +86,14 @@ public class WikiBankTagIntegrationPlugin extends Plugin {
     @Subscribe
     public void onCommandExecuted(CommandExecuted commandExecuted) {
         String[] args = commandExecuted.getArguments();
-        if (commandExecuted.getCommand().equals(config.categoryChatCommand()) && args.length > 0) {
+        if (args.length < 1) {
+            // silently exit
+            return;
+        }
+
+        if (commandExecuted.getCommand().equals(config.categoryChatCommand())) {
             addTagsFromCategory(String.join(" ", args));
-        } else if (commandExecuted.getCommand().equals(config.dropsChatCommand()) && args.length > 0) {
+        } else if (commandExecuted.getCommand().equals(config.dropsChatCommand())) {
             addTagsFromDrops(String.join(" ", args));
         }
     }
@@ -199,27 +200,22 @@ public class WikiBankTagIntegrationPlugin extends Plugin {
      * @return A list of Item IDs found for the provided category.
      */
     public void getCategoryIDs(String category, Consumer<int[]> callback) {
-        try {
-            String safe_query = URLEncoder.encode(category, "UTF-8");
-            String query = String.format("[[category:%s]]|?All+Item+ID", safe_query);
-            getWikiResponse(query, new okhttp3.Callback() {
-                @Override
-                public void onFailure(Call call, IOException e) {
-                    log.error("Error fetching category IDs: {}", e.getMessage());
-                    callback.accept(new int[0]); // Pass empty array to callback
-                }
+        String safeQuery = getNormalisedQuery(category, ArgHandler.AggregateTerms.Format.CATEGORY);
+        String query = String.format("bucket('item_id').select('item_id.id').where(%s)", safeQuery);
+        getWikiResponse(query, new okhttp3.Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                log.error("Error fetching category IDs: {}", e.getMessage());
+                callback.accept(new int[0]); // Pass empty array to callback
+            }
 
-                @Override
-                public void onResponse(Call call, Response response) throws IOException {
-                    String wikiResponse = response.body().string();
-                    int[] ids = getIDsFromJSON(wikiResponse);
-                    callback.accept(ids);
-                }
-            });
-        } catch (IOException e) {
-            log.error("Error encoding category: {}", e.getMessage());
-            callback.accept(new int[0]); // Pass empty array to callback
-        }
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                String wikiResponse = response.body().string();
+                int[] ids = getIDsFromJSON(wikiResponse);
+                callback.accept(ids);
+            }
+        });
     }
 
 
@@ -231,37 +227,44 @@ public class WikiBankTagIntegrationPlugin extends Plugin {
      * @return A list of Item IDs found for the provided category.
      */
     public void getDropIDs(String monster, Consumer<int[]> callback) {
-        try {
-            String safe_query = URLEncoder.encode(monster, "UTF-8");
-            String query = String.format("[[Dropped from::%s]]|?Dropped item page.All+Item+ID", safe_query);
-            getWikiResponse(query, new okhttp3.Callback() {
-                @Override
-                public void onFailure(Call call, IOException e) {
-                    log.error("Error fetching drop IDs: {}", e.getMessage());
-                    callback.accept(new int[0]); // Pass empty array to callback
-                }
+        String safeQuery = getNormalisedQuery(monster, ArgHandler.AggregateTerms.Format.MONSTER);
+        String query = String.format("bucket('dropsline').join('item_id', 'dropsline.item_name', 'item_id.page_name').where(%s).select('item_id.id')", safeQuery);
+        getWikiResponse(query, new okhttp3.Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                log.error("Error fetching drop IDs: {}", e.getMessage());
+                callback.accept(new int[0]); // Pass empty array to callback
+            }
 
-                @Override
-                public void onResponse(Call call, Response response) throws IOException {
-                    String wikiResponse = response.body().string();
-                    int[] ids = getIDsFromJSON(wikiResponse);
-                    callback.accept(ids);
-                }
-            });
-        } catch (IOException e) {
-            log.error("Error encoding monster name: {}", e.getMessage());
-            callback.accept(new int[0]); // Pass empty array to callback
-        }
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                String wikiResponse = response.body().string();
+                int[] ids = getIDsFromJSON(wikiResponse);
+                callback.accept(ids);
+            }
+        });
+    }
+
+    /**
+     * Normalises the subject by replacing underscores with spaces
+     * and escaping it for safe use in query strings.
+     *
+     * @param subject the input string
+     * @param format the format string
+     * @return the normalised and escaped string
+     */
+    private String getNormalisedQuery(String subject, ArgHandler.AggregateTerms.Format format) {
+        return Objects.requireNonNull(ArgHandler.parseAggregateTerms(client, subject)).toSmwString(format);
     }
 
     /**
      * Queries the OSRS wiki and returns the response
      *
-     * @param category The category query string
+     * @param subject The subject of the query string e.g. category name or monster name
      */
-    private void getWikiResponse(String category, okhttp3.Callback callback) {
+    private void getWikiResponse(String subject, okhttp3.Callback callback) {
         Request request = new Request.Builder()
-                .url(createQueryURL(category))
+                .url(createQueryURL(subject))
                 .build();
         httpClient.newCall(request).enqueue(callback);
     }
@@ -274,7 +277,7 @@ public class WikiBankTagIntegrationPlugin extends Plugin {
      * @return The full query URL
      */
     private String createQueryURL(String query) {
-        return String.format(WIKI_QUERY_FORMAT, query);
+        return String.format(WIKI_BUCKET_QUERY_FORMAT, query);
     }
 
     /**
@@ -282,15 +285,36 @@ public class WikiBankTagIntegrationPlugin extends Plugin {
      *
      * @param jsonIn The JSON as a string. It must be in the correct format.
      * @return A list of the item IDs pulled from the JSON results.
-     * @see AskQuery.Response
+     * @see BucketQuery.Response
      */
     private int[] getIDsFromJSON(String jsonIn) {
-        AskQuery.Response askResponse = gson.fromJson(jsonIn, AskQuery.Response.class);
-        return askResponse.getQuery().getResults().values()
+        BucketQuery.Response bucketResponse = gson.fromJson(jsonIn, BucketQuery.Response.class);
+        return bucketResponse.getBucket()
                 .stream()
-                .flatMap(v -> v.getPrintouts().getAllItemID().stream())
-                .mapToInt(x -> x)
+                .flatMap(bucketItems ->
+                        Optional.ofNullable(bucketItems.getItemIds())
+                                .orElse(Collections.emptyList())
+                                .stream()
+                )
+                .map(WikiBankTagIntegrationPlugin::parseIntSafe)
+                .flatMapToInt(opt -> opt.map(IntStream::of).orElseGet(IntStream::empty))
                 .distinct()
                 .toArray();
+    }
+
+    /**
+     * Parses the given string into an {@code Integer}.
+     * Returns an {@link Optional} with the value if parsing succeeds,
+     * or {@link Optional#empty()} if it fails.
+     *
+     * @param itemIdString the string to parse
+     * @return an optional integer
+     */
+    private static Optional<Integer> parseIntSafe(String itemIdString) {
+        try {
+            return Optional.of(Integer.parseInt(itemIdString));
+        } catch (NumberFormatException e) {
+            return Optional.empty();
+        }
     }
 }

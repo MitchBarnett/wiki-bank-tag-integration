@@ -27,7 +27,6 @@ package com.mitchbarnett.wikibanktagintegration;
 
 import net.runelite.client.RuneLite;
 import net.runelite.client.externalplugins.ExternalPluginManager;
-import com.mitchbarnett.wikibanktagintegration.WikiBankTagIntegrationPlugin;
 
 public class WikiBankTagIntegrationPluginTest
 {
